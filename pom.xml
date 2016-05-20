@@ -111,6 +111,17 @@
 
 
 	</repositories>
+	
+	<distributionManagement>
+		<repository>
+			<id>sourcesup</id>
+			<url>http://sourcesup.renater.fr/nexus/content/repositories/reposedoo-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>sourcesup</id>
+			<url>http://sourcesup.renater.fr/nexus/content/repositories/reposedoo-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 
   
