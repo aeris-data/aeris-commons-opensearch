@@ -4,7 +4,7 @@
   <artifactId>commons</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   
-  <properties>
+    <properties>
   		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -65,28 +65,44 @@
 			<artifactId>abdera-extensions-opensearch</artifactId>
 			<version>1.1.3</version>
 		</dependency>
-
-
+		
 		<dependency>
 			<groupId>fr.sedoo.commons</groupId>
-			<artifactId>metadata-utils</artifactId>
-			<version>0.2.1-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>ch.qos.logback</groupId>
-					<artifactId>logback-classic</artifactId>
-				</exclusion>
-			</exclusions>
+			<artifactId>commons-backoffice</artifactId>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 
-
+<!-- 		<dependency> -->
+<!-- 			<groupId>fr.sedoo.commons</groupId> -->
+<!-- 			<artifactId>metadata-utils</artifactId> -->
+<!-- 			<version>0.2.1-SNAPSHOT</version> -->
+<!-- 			<exclusions> -->
+<!-- 				<exclusion> -->
+<!-- 					<groupId>fr.sedoo.integration</groupId> -->
+<!-- 					<artifactId>log-integration</artifactId> -->
+<!-- 				</exclusion> -->
+<!-- 				<exclusion> -->
+<!-- 					<groupId>fr.sedoo.integration</groupId> -->
+<!-- 					<artifactId>geotk-integration</artifactId> -->
+<!-- 				</exclusion> -->
+<!-- 				<exclusion> -->
+<!-- 					<artifactId>geotk-sensorML</artifactId> -->
+<!-- 					<groupId>org.geotoolkit.pending</groupId> -->
+<!-- 				</exclusion> -->
+<!-- 				<exclusion> -->
+<!-- 					<artifactId>geotk-xml-sensorML</artifactId> -->
+<!-- 					<groupId>org.geotoolkit.pending</groupId> -->
+<!-- 				</exclusion> -->
+<!-- 			</exclusions> -->
+<!-- 		</dependency> -->
 		
+			
 		<dependency>
-			<groupId>org.ehcache</groupId>
-			<artifactId>ehcache</artifactId>
-			<version>3.0.1</version>
+		    <groupId>net.sf.ehcache</groupId>
+		    <artifactId>ehcache</artifactId>
+		    <version>2.10.2</version>
 		</dependency>
-		
+			
 
 		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
@@ -95,7 +111,6 @@
 		</dependency>
 
 	</dependencies>
-
 
 	<repositories>
 
@@ -122,7 +137,5 @@
 			<url>http://sourcesup.renater.fr/nexus/content/repositories/reposedoo-snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
-
-
   
 </project>
