@@ -19,7 +19,7 @@ import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.OpensearchUtils;
 import fr.sedoo.commons.util.ListUtil;
 
-public class CollectionDAOLocalAerocloImpl implements CollectionDAO {
+public class CollectionDAOLocalFileSystemSedooImpl implements CollectionDAO {
 
 	private final static String FILENAME_SEPARATOR = "_";
 	private String root;
