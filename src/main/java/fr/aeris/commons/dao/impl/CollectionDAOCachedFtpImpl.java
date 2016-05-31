@@ -1,4 +1,4 @@
-package fr.aeris.commons.model.dao.impl;
+package fr.aeris.commons.dao.impl;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -9,11 +9,10 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.ServiceUnavailableException;
 
-import fr.aeris.commons.model.dao.CollectionDAO;
+import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.OpensearchUtils;
 import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
@@ -21,11 +20,8 @@ import net.sf.ehcache.config.CacheConfiguration;
 @SuppressWarnings("unchecked")
 public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 
-	private final static String CACHE_START_DATE = "2004-01-01";
-
 	private CollectionDAO ftpDao;
 	private Cache cache;
-	private boolean crawling;
 
 	public CollectionDAO getFtpDao() {
 		return ftpDao;
@@ -68,17 +64,11 @@ public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 	public List<OSEntry> findAll(List<String> collections, String startDate, String endDate)
 			throws ServiceUnavailableException {
 		List<OSEntry> results = new ArrayList<OSEntry>();
-		final List<String> toUpdate = new ArrayList<String>();
 		for (String collection : collections) {
 
 			// Verification collection en cache
 			if (cache.get(collection) == null || cache.get(collection).isExpired()) {
-
-				// Si non, on l'ajoute à la liste des collections à mettre a
-				// jour
-				if (!toUpdate.contains(collection)) {
-					toUpdate.add(collection);
-				}
+				results.addAll(ftpDao.findAll(Arrays.asList(collection), startDate, endDate));
 			} else {
 				Element el = cache.get(collection);
 				List<OSEntry> granules = (List<OSEntry>) el.getObjectValue();
@@ -109,25 +99,6 @@ public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 			}
 		}
 
-		// S'il y a des collections a mettre a jour et que la maj n'est pas deja
-		// en cours, on renvoi les donnees depuis le ftp puis on lance la maj en
-		// tache de fond
-		if (toUpdate.size() > 0 && !crawling) {
-			results.addAll(ftpDao.findAll(collections, startDate, endDate));
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						crawl(toUpdate);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}).start();
-		} else if (toUpdate.size() > 0 && crawling) {
-			throw new ServiceUnavailableException();
-		}
-
 		return results;
 	}
 
@@ -150,33 +121,6 @@ public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 			}
 		}
 		return results;
-	}
-
-	/**
-	 * Crawl through the ftp server folder and put all granules in cache
-	 *
-	 * @param collections
-	 * @throws Exception
-	 * @throws CacheException
-	 * @throws IllegalStateException
-	 * @throws IllegalArgumentException
-	 */
-	public void crawl(List<String> collections)
-			throws IllegalArgumentException, IllegalStateException, CacheException, Exception {
-		crawling = true;
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
-		// les granules dont la date est comprise entre CACHE_START_DATE et
-		// aujourd'hui seront mis en cache
-		String startDate = CACHE_START_DATE;
-		String endDate = df.format(new Date());
-
-		for (String collection : collections) {
-			System.out.println("updating " + collection);
-			cache.put(new Element(collection, ftpDao.findAll(Arrays.asList(collection), startDate, endDate)));
-		}
-		collections.clear();
-		crawling = false;
 	}
 
 }

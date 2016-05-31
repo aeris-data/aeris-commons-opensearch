@@ -1,9 +1,9 @@
-package fr.aeris.commons.model.dao.impl;
+package fr.aeris.commons.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.aeris.commons.model.dao.CollectionDAO;
+import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.OSEntry;
 
 public class AggregatedCollectionDAO implements CollectionDAO {

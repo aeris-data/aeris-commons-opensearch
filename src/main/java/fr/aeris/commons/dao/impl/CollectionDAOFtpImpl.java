@@ -1,4 +1,4 @@
-package fr.aeris.commons.model.dao.impl;
+package fr.aeris.commons.dao.impl;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -13,7 +13,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
-import fr.aeris.commons.model.dao.CollectionDAO;
+import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.Media;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.OpensearchUtils;

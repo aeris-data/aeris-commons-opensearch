@@ -1,4 +1,4 @@
-package fr.aeris.commons.model.dao;
+package fr.aeris.commons.dao;
 
 import java.util.List;
 
