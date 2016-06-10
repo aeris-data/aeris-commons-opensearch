@@ -1,8 +1,12 @@
 package fr.aeris.commons.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -24,6 +28,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
@@ -41,9 +46,13 @@ import fr.sedoo.commons.spring.SpringBeanFactory;
 @Path("/files")
 public class FileService {
 
+	private final String USER_AGENT = "Mozilla/5.0";
+
 	FileSystemDAO fileSystemDao;
 	FileSystemDAOImpl dao;
 	String currentFolder;
+	String token;
+	String tokenProvider;
 
 	@Context
 	HttpServletRequest httpRequest;
@@ -55,6 +64,7 @@ public class FileService {
 			fileSystemDao = (FileSystemDAO) springBeanFactory.getBeanByName(FileSystemDAO.BEAN_NAME);
 		}
 		dao = (FileSystemDAOImpl) fileSystemDao;
+
 	}
 
 	@GET
@@ -62,7 +72,7 @@ public class FileService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response listFiles(@QueryParam("path") String path) {
 		List<FileObject> results = new ArrayList<>();
-		Response response = null;
+		ResponseBuilder response = null;
 		String baseDir = dao.getBaseDirectory();
 		currentFolder = baseDir + path;
 		if (!path.endsWith(File.separator)) {
@@ -71,7 +81,7 @@ public class FileService {
 		List<File> fileList = fileSystemDao.listFolder(path);
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		if (fileList.isEmpty()) {
-			response = Response.ok().status(Status.NO_CONTENT).entity("No content").build();
+			response = Response.ok().status(Status.NO_CONTENT).entity("No content");
 		} else {
 			for (File file : fileList) {
 				FileObject fileObject = new FileObject();
@@ -99,16 +109,14 @@ public class FileService {
 			try {
 				ObjectMapper mapper = new ObjectMapper();
 				String responseString = mapper.writeValueAsString(results);
-				response = Response.ok().entity(responseString).type(MediaType.APPLICATION_JSON)
-						.header("Access-Control-Allow-Origin", "*")
-						.header("Access-Control-Allow-Headers",
-								"origin, content-type, accept, authorization,X-Requested-With")
-						.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
+				response = Response.ok().entity(responseString).type(MediaType.APPLICATION_JSON);
 			} catch (JsonProcessingException e) {
 				e.printStackTrace();
 			}
 		}
-		return response;
+		return response.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
 	@POST
@@ -116,24 +124,35 @@ public class FileService {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response uploadFiles(final FormDataMultiPart multiPart) {
 		String folder = "";
-		Response resp = Response.serverError().build();
+		ResponseBuilder resp = null;
 		List<FormDataBodyPart> bodyParts = multiPart.getFields("file");
 		try {
 			BodyPartEntity folderEntity = (BodyPartEntity) multiPart.getField("folder").getEntity();
 			folder = IOUtils.toString(folderEntity.getInputStream());
+			BodyPartEntity tokenEntity = (BodyPartEntity) multiPart.getField("token").getEntity();
+			token = IOUtils.toString(tokenEntity.getInputStream());
+			BodyPartEntity tokenProviderEntity = (BodyPartEntity) multiPart.getField("token-provider").getEntity();
+			tokenProvider = IOUtils.toString(tokenProviderEntity.getInputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		StringBuffer fileDetails = new StringBuffer("");
-		for (int i = 0; i < bodyParts.size(); i++) {
-			BodyPartEntity bodyPartEntity = (BodyPartEntity) bodyParts.get(i).getEntity();
-			String fileName = bodyParts.get(i).getContentDisposition().getFileName();
-			String file = dao.getBaseDirectory() + File.separator + folder + File.separator + fileName;
-			resp = saveFile(bodyPartEntity.getInputStream(), file);
-			fileDetails.append("File saved");
+		boolean auth = validateToken();
+
+		if (!auth) {
+			resp = Response.status(HttpStatus.SC_UNAUTHORIZED).entity("You must be identified to perform this action");
+		} else {
+			for (int i = 0; i < bodyParts.size(); i++) {
+				BodyPartEntity bodyPartEntity = (BodyPartEntity) bodyParts.get(i).getEntity();
+				String fileName = bodyParts.get(i).getContentDisposition().getFileName();
+				String file = dao.getBaseDirectory() + File.separator + folder + File.separator + fileName;
+				resp = saveFile(bodyPartEntity.getInputStream(), file);
+			}
 		}
-		return resp;
+
+		return resp.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
 	@GET
@@ -148,7 +167,9 @@ public class FileService {
 		} else {
 			response = Response.ok().status(Status.NO_CONTENT).entity("No content");
 		}
-		return response.build();
+		return response.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
 	@GET
@@ -175,20 +196,60 @@ public class FileService {
 		return response.build();
 	}
 
-	private Response saveFile(InputStream file, String name) {
+	private ResponseBuilder saveFile(InputStream file, String name) {
 		try {
 			java.nio.file.Path path = FileSystems.getDefault().getPath(name);
-			Files.copy(file, path);
-			return Response.ok().entity("File saved").header("Access-Control-Allow-Origin", "*")
-					.header("Access-Control-Allow-Headers",
-							"origin, content-type, accept, authorization,X-Requested-With")
-					.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
-		} catch (IOException e) {
-			return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*")
-					.header("Access-Control-Allow-Headers",
-							"origin, content-type, accept, authorization,X-Requested-With")
-					.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
+			File testFile = path.toFile();
+			if (testFile.exists()) {
+				return Response.status(HttpStatus.SC_CONFLICT).entity("File already exist on the server");
+			} else {
+				Files.copy(file, path);
+				return Response.ok().status(HttpStatus.SC_CREATED).entity("File saved");
+			}
+		} catch (Exception e) {
+			return Response.serverError().entity(e.getMessage());
 		}
+	}
+
+	private boolean validateToken() {
+		try {
+			String url = tokenProvider; // "http://httpbin.org/get";
+			String urlParameters = "token=" + token;
+			URL obj = new URL(url + "?" + urlParameters);
+			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+			// optional default is GET
+			con.setRequestMethod("GET");
+
+			// add request header
+			con.setRequestProperty("User-Agent", USER_AGENT);
+
+			int responseCode = con.getResponseCode();
+			System.out.println("\nSending 'GET' request to URL : " + url);
+			System.out.println("Response Code : " + responseCode);
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+
+			// print result
+			System.out.println(response.toString());
+
+			if (responseCode == 200) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (Exception e) {
+			// e.printStackTrace();
+		}
+		return false;
+
 	}
 
 }
