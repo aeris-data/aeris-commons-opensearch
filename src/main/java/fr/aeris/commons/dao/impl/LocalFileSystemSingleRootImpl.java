@@ -2,9 +2,9 @@ package fr.aeris.commons.dao.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -220,11 +220,15 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 	 * @throws IOException
 	 */
 	private boolean isAnImage(File file) throws IOException {
-		String absolutePath = file.getAbsolutePath();
-		String folder = absolutePath.substring(0, absolutePath.lastIndexOf(File.separator));
+		List<String> imagesExt = new ArrayList<String>();
+		imagesExt.addAll(Arrays.asList("jpg", "png", "gif", "bmp"));
 		String filename = file.getName();
-		String fileType = java.nio.file.Files.probeContentType(FileSystems.getDefault().getPath(folder, filename));
-		return fileType.contains("image/") ? true : false;
+		for (String ext : imagesExt) {
+			if (FilenameUtils.getExtension(filename).equalsIgnoreCase(ext)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String dateToFolderName(String date) {
