@@ -34,6 +34,8 @@ import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +48,7 @@ import fr.sedoo.commons.spring.SpringBeanFactory;
 @Path("/files")
 public class FileService {
 
+	private final static Logger log = LoggerFactory.getLogger(FileService.class);
 	private final String USER_AGENT = "Mozilla/5.0";
 
 	FileSystemDAO fileSystemDao;
@@ -123,12 +126,15 @@ public class FileService {
 	@Path("/list")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response uploadFiles(final FormDataMultiPart multiPart) {
+		String baseDir = dao.getBaseDirectory();
 		String folder = "";
+		String completePath = "";
 		ResponseBuilder resp = null;
 		List<FormDataBodyPart> bodyParts = multiPart.getFields("file");
 		try {
 			BodyPartEntity folderEntity = (BodyPartEntity) multiPart.getField("folder").getEntity();
 			folder = IOUtils.toString(folderEntity.getInputStream());
+			completePath = baseDir + folder;
 			BodyPartEntity tokenEntity = (BodyPartEntity) multiPart.getField("token").getEntity();
 			token = IOUtils.toString(tokenEntity.getInputStream());
 			BodyPartEntity tokenProviderEntity = (BodyPartEntity) multiPart.getField("token-provider").getEntity();
@@ -141,12 +147,15 @@ public class FileService {
 
 		if (!auth) {
 			resp = Response.status(HttpStatus.SC_UNAUTHORIZED).entity("You must be identified to perform this action");
+			log.info("---> " + httpRequest.getRemoteAddr() + " tried to upload file in " + completePath
+					+ " but was unidentified");
 		} else {
 			for (int i = 0; i < bodyParts.size(); i++) {
 				BodyPartEntity bodyPartEntity = (BodyPartEntity) bodyParts.get(i).getEntity();
 				String fileName = bodyParts.get(i).getContentDisposition().getFileName();
 				String file = dao.getBaseDirectory() + File.separator + folder + File.separator + fileName;
 				resp = saveFile(bodyPartEntity.getInputStream(), file);
+				log.info(httpRequest.getRemoteAddr() + " uploaded file " + fileName + " in " + completePath + "");
 			}
 		}
 
@@ -225,8 +234,6 @@ public class FileService {
 			con.setRequestProperty("User-Agent", USER_AGENT);
 
 			int responseCode = con.getResponseCode();
-			System.out.println("\nSending 'GET' request to URL : " + url);
-			System.out.println("Response Code : " + responseCode);
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			String inputLine;
