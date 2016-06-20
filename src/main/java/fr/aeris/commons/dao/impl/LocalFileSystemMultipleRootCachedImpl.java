@@ -19,18 +19,33 @@ import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.Cleanable;
 import fr.sedoo.commons.util.ListUtil;
 import fr.sedoo.commons.util.StringUtil;
+import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
+import net.sf.ehcache.config.CacheConfiguration;
 
-public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable {
+public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cleanable {
 
 	private String currentContent = "";
 	private String configFileName = "";
 	private List<LocalFileSystemSingleRootImpl> singleRootDaos = new ArrayList<>();
+	CacheManager cacheManager;
+	private Cache cache;
 
-	Logger logger = LoggerFactory.getLogger(LocalFileSystemMultipleRootImpl.class);
+	Logger logger = LoggerFactory.getLogger(LocalFileSystemMultipleRootCachedImpl.class);
 
 	@PostConstruct
 	private void postConstruct() {
+		cacheManager = CacheManager.getInstance();
+		cache = cacheManager.getCache("appCache");
+		if (cache == null) {
+			cacheManager.addCache("appCache");
+			cache = cacheManager.getCache("appCache");
+			CacheConfiguration config = cache.getCacheConfiguration();
+			config.setTimeToIdleSeconds(3600);
+			config.setTimeToLiveSeconds(3600);
+		}
+
 		try {
 			checkNewContent();
 		} catch (IOException e) {
@@ -52,8 +67,6 @@ public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable
 			File file = new File(getConfigFileName());
 
 			Properties properties = new Properties();
-			CacheManager cacheManager = CacheManager.getInstance();
-			cacheManager.clearAll();
 
 			logger.debug("Fichier de configuration: " + file);
 
@@ -94,18 +107,26 @@ public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<String> getAllCollections() {
 		List<String> result = new ArrayList<>();
 		logger.debug("Nombre de DAO " + singleRootDaos.size());
-		for (CollectionDAO dao : singleRootDaos) {
-			if (dao instanceof LocalFileSystemSingleRootImpl) {
-				LocalFileSystemSingleRootImpl aux = (LocalFileSystemSingleRootImpl) dao;
-				logger.debug("getAllCollection sur le DAO de racine " + aux.getRoot() + " pour le prefixe "
-						+ aux.getCollectionPrefix());
+		if (cache.get("collections") == null || cache.get("collections").isExpired()) {
+			for (CollectionDAO dao : singleRootDaos) {
+				if (dao instanceof LocalFileSystemSingleRootImpl) {
+					LocalFileSystemSingleRootImpl aux = (LocalFileSystemSingleRootImpl) dao;
+					logger.debug("getAllCollection sur le DAO de racine " + aux.getRoot() + " pour le prefixe "
+							+ aux.getCollectionPrefix());
+				}
+				result.addAll(dao.getAllCollections());
+				cache.put(new Element("collections", result));
 			}
-			result.addAll(dao.getAllCollections());
+		} else {
+			Element el = cache.get("collections");
+			result = (List<String>) el.getObjectValue();
 		}
+
 		return result;
 	}
 
@@ -137,6 +158,7 @@ public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable
 
 	@Override
 	public void clean() throws Exception {
+		cacheManager.clearAll();
 		checkNewContent();
 	}
 
