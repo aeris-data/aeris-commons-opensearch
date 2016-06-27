@@ -35,11 +35,6 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 		setCollectionFolderValidator(new SedooCampaignCollectionFolderValidator());
 	}
 
-	// @PostConstruct
-	// private void init() {
-	// //setRoot("/home/klein/Documents/rootFolder/aeroclo");
-	// }
-
 	@Override
 	public List<String> getAllCollections() {
 		List<String> collections = listCollectionFolders(getRoot());

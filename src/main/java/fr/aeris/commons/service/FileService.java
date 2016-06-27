@@ -49,6 +49,8 @@ import fr.sedoo.commons.spring.SpringBeanFactory;
 public class FileService {
 
 	private final static Logger log = LoggerFactory.getLogger(FileService.class);
+
+	// Do NOT modify
 	private final String USER_AGENT = "Mozilla/5.0";
 
 	FileSystemDAO fileSystemDao;
@@ -222,7 +224,7 @@ public class FileService {
 
 	private boolean validateToken() {
 		try {
-			String url = tokenProvider; // "http://httpbin.org/get";
+			String url = tokenProvider;
 			String urlParameters = "token=" + token;
 			URL obj = new URL(url + "?" + urlParameters);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -253,7 +255,7 @@ public class FileService {
 				return false;
 			}
 		} catch (Exception e) {
-			// e.printStackTrace();
+			log.error("Error trying to validate token: " + token);
 		}
 		return false;
 
