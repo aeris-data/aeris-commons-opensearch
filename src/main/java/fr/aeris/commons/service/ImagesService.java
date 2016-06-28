@@ -14,9 +14,9 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 public class ImagesService {
 
 	@GET
-	@Path("/getImage")
+	@Path("/image")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response serveImage(@QueryParam("image") String filepath) {
+	public Response serveImage(@QueryParam("q") String filepath) {
 		File file = new File(filepath);
 		ResponseBuilder response;
 		if (file.exists()) {

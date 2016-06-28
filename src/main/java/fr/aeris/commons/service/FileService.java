@@ -172,7 +172,7 @@ public class FileService {
 	public Response serveFile(@QueryParam("path") String filepath) {
 		File file = new File(filepath);
 		ResponseBuilder response;
-		if (file.exists()) {
+		if (file.exists() && file.getAbsolutePath().startsWith(dao.getBaseDirectory())) {
 			response = Response.ok(file, MediaType.APPLICATION_OCTET_STREAM).header("Content-Disposition",
 					"attachment; filename='" + file.getName() + "'");
 		} else {
@@ -188,17 +188,17 @@ public class FileService {
 	@Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, "application/pdf" })
 	public Response showFile(@QueryParam("path") String filepath) {
 		File file = new File(dao.getBaseDirectory() + filepath);
-		String extension = FilenameUtils.getExtension(file.getName());
 		String fileType;
-		if (extension.equals("pdf")) {
-			fileType = "application/pdf";
-		} else if (extension.equals("html")) {
-			fileType = MediaType.TEXT_HTML;
-		} else {
-			fileType = MediaType.TEXT_PLAIN;
-		}
 		ResponseBuilder response;
-		if (file.exists()) {
+		if (file.exists() && file.getAbsolutePath().startsWith(dao.getBaseDirectory())) {
+			String extension = FilenameUtils.getExtension(file.getName());
+			if (extension.equals("pdf")) {
+				fileType = "application/pdf";
+			} else if (extension.equals("html")) {
+				fileType = MediaType.TEXT_HTML;
+			} else {
+				fileType = MediaType.TEXT_PLAIN;
+			}
 			response = Response.ok(file).header("Content-Disposition", "filename='" + file.getName() + "'")
 					.type(fileType);
 		} else {

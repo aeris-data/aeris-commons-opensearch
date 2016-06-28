@@ -24,6 +24,7 @@ import fr.sedoo.commons.util.StringUtil;
 
 public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
+	private final static String IMAGE_SERVICE_URL = "http://opensearch.sedoo.fr/rest/images/image?q=";
 	private final static String FILENAME_SEPARATOR = "_";
 	private String root;
 	private CollectionFolderValidator collectionFolderValidator;
@@ -134,10 +135,8 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 							// nom du fichier
 							String filenameWithoutExt = FilenameUtils.removeExtension(name);
 							List<String> filenameParts = tokenizeFilename(filenameWithoutExt);
-
 							OSEntry entry = new OSEntry();
-							String mediaPath = "http://opensearch.sedoo.fr/rest/images/getImage?image="
-									+ testedFile.getAbsolutePath();
+							String mediaPath = IMAGE_SERVICE_URL + testedFile.getAbsolutePath();
 							entry.setMedia(new Media(mediaPath, "QUICKLOOK"));
 
 							// String parentIdentifier = filenameParts.get(1);
