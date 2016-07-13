@@ -1,7 +1,6 @@
 package fr.aeris.commons.formatter.impl;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,6 +11,7 @@ import org.apache.abdera.model.Element;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.ExtensibleElementWrapper;
 import org.apache.abdera.model.Feed;
+import org.apache.commons.net.ntp.TimeStamp;
 
 import fr.aeris.commons.formatter.ResponseConstants;
 import fr.aeris.commons.formatter.ResponseFormatter;
@@ -22,6 +22,7 @@ import fr.aeris.commons.utils.OSEntryComparator;
 
 public class ResponseFormatterAtomImpl implements ResponseFormatter {
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public String format(Object object, HttpServletRequest httpRequest) throws Exception {
 		Abdera abdera = new Abdera();
@@ -33,7 +34,7 @@ public class ResponseFormatterAtomImpl implements ResponseFormatter {
 				.declareNS(NamespaceConstants.MEDIA_NS, NamespaceConstants.MEDIA_PREFIX);
 		feed.setId(UUID.randomUUID().toString());
 		feed.setTitle(ResponseConstants.FEED_TITLE);
-		feed.setUpdated(new Date());
+		feed.setUpdated(new TimeStamp(System.currentTimeMillis()).toString());
 		for (String author : ResponseConstants.FEED_AUTHORS) {
 			feed.addAuthor(author);
 		}
