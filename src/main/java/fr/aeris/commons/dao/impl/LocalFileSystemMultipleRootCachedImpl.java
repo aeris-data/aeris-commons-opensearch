@@ -162,4 +162,26 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 		checkNewContent();
 	}
 
+	@Override
+	public String getFirstFolder(String collection) {
+		String result = "";
+		for (CollectionDAO dao : singleRootDaos) {
+			if (collection.contains(((LocalFileSystemSingleRootImpl) dao).getCollectionPrefix())) {
+				result = dao.getFirstFolder(collection);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public String getLastFolder(String collection) {
+		String result = "";
+		for (CollectionDAO dao : singleRootDaos) {
+			if (collection.contains(((LocalFileSystemSingleRootImpl) dao).getCollectionPrefix())) {
+				result = dao.getLastFolder(collection);
+			}
+		}
+		return result;
+	}
+
 }

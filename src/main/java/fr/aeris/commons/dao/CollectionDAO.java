@@ -39,4 +39,8 @@ public interface CollectionDAO {
 	 */
 	public List<OSEntry> findTerms(List<String> collections, List<String> terms, String startDate, String endDate);
 
+	public String getFirstFolder(String collection);
+
+	public String getLastFolder(String collection);
+
 }

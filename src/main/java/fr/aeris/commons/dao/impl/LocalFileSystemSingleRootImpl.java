@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -251,6 +252,46 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
 	public String getCollectionPrefix() {
 		return collectionPrefix;
+	}
+
+	private ArrayList<String> listSubDirs(String collection) {
+		ArrayList<String> results = new ArrayList<String>();
+		collection = collection.substring(collection.indexOf("/"));
+		File file = new File(getRoot() + "/" + collection);
+		if (file.exists()) {
+			String[] directories = file.list();
+			if (directories != null) {
+				for (String dir : directories) {
+					File testedFile = new File(getRoot() + "/" + collection + "/" + dir);
+					if (testedFile.isDirectory()) {
+						results.add(dir);
+					}
+				}
+			}
+		}
+		return results;
+	}
+
+	@Override
+	public String getFirstFolder(String collection) {
+		ArrayList<String> directories = listSubDirs(collection);
+		String result = "";
+		if (directories.size() > 0) {
+			Collections.sort(directories);
+			result = directories.get(0);
+		}
+		return result;
+	}
+
+	@Override
+	public String getLastFolder(String collection) {
+		ArrayList<String> directories = listSubDirs(collection);
+		String result = "";
+		if (directories.size() > 0) {
+			Collections.sort(directories);
+			result = directories.get(directories.size() - 1);
+		}
+		return result;
 	}
 
 }

@@ -58,4 +58,26 @@ public class AggregatedCollectionDAO implements CollectionDAO {
 		return result;
 	}
 
+	@Override
+	public String getFirstFolder(String collection) {
+		String result = "";
+		if (daos != null) {
+			for (CollectionDAO dao : daos) {
+				result = dao.getFirstFolder(collection);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public String getLastFolder(String collection) {
+		String result = "";
+		if (daos != null) {
+			for (CollectionDAO dao : daos) {
+				result = dao.getLastFolder(collection);
+			}
+		}
+		return result;
+	}
+
 }

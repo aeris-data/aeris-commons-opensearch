@@ -8,9 +8,11 @@ public class JsonCollectionsResponse {
 	private String searchUrl;
 	private int totalResults;
 	private List<String> results;
+	private List<OSCollection> details;
 
 	public JsonCollectionsResponse() {
 		results = new ArrayList<String>();
+		details = new ArrayList<OSCollection>();
 	}
 
 	public String getSearchUrl() {
@@ -39,6 +41,18 @@ public class JsonCollectionsResponse {
 
 	public void addResult(String collection) {
 		results.add(collection);
+	}
+
+	public List<OSCollection> getDetails() {
+		return details;
+	}
+
+	public void setDetails(List<OSCollection> details) {
+		this.details = details;
+	}
+
+	public void addDetail(OSCollection collection) {
+		details.add(collection);
 	}
 
 }

@@ -140,4 +140,22 @@ public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable
 		checkNewContent();
 	}
 
+	@Override
+	public String getFirstFolder(String collection) {
+		String result = "";
+		for (CollectionDAO dao : singleRootDaos) {
+			result = dao.getFirstFolder(collection);
+		}
+		return result;
+	}
+
+	@Override
+	public String getLastFolder(String collection) {
+		String result = "";
+		for (CollectionDAO dao : singleRootDaos) {
+			result = dao.getLastFolder(collection);
+		}
+		return result;
+	}
+
 }

@@ -123,4 +123,16 @@ public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 		return results;
 	}
 
+	@Override
+	public String getFirstFolder(String collection) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getLastFolder(String collection) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -39,6 +39,7 @@ import fr.aeris.commons.formatter.ResponseFormatter;
 import fr.aeris.commons.formatter.impl.ResponseFormatterAtomImpl;
 import fr.aeris.commons.formatter.impl.ResponseFormatterJsonImpl;
 import fr.aeris.commons.model.elements.JsonCollectionsResponse;
+import fr.aeris.commons.model.elements.OSCollection;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.model.elements.Url;
 import fr.aeris.commons.utils.AtomConstants;
@@ -131,6 +132,21 @@ public class OpenSearchService {
 				List<String> collections = collectionDAO.getAllCollections();
 				JsonCollectionsResponse responseEntity = new JsonCollectionsResponse();
 				URL baseUrl = new URL(httpRequest.getRequestURL().toString());
+
+				for (String coll : collections) {
+					OSCollection currColl = new OSCollection();
+					currColl.setName(coll);
+					String firstFolder = collectionDAO.getFirstFolder(coll);
+					if (firstFolder != null && !firstFolder.isEmpty()) {
+						currColl.setFirstDate(firstFolder);
+					}
+					String lastFolder = collectionDAO.getLastFolder(coll);
+					if (lastFolder != null && !lastFolder.isEmpty()) {
+						currColl.setLastDate(lastFolder);
+					}
+					responseEntity.addDetail(currColl);
+				}
+
 				responseEntity.setResults(collections);
 				responseEntity.setTotalResults(collections.size());
 				String searchUrl = buildUrl(baseUrl, "").toString();
@@ -209,7 +225,12 @@ public class OpenSearchService {
 
 	private StringBuilder buildUrl(URL baseUrl, String format) {
 		StringBuilder urlTemplate = new StringBuilder(baseUrl.toString());
-		urlTemplate.append("/" + format + "/collection");
+		// Eviter d'avoir 2 slash si le format n'est pas définit
+		if (!format.isEmpty()) {
+			urlTemplate.append("/" + format + "/collection");
+		} else {
+			urlTemplate.append("/collection");
+		}
 		urlTemplate.append("?");
 		addParameterToOpenSearchUrl(HttpConstants.TERMS_PARAMETER, OpenSearchConstants.QUERY_SEARCHTERMS_LN,
 				urlTemplate, true);
