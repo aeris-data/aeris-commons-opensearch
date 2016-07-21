@@ -158,4 +158,13 @@ public class LocalFileSystemMultipleRootImpl implements CollectionDAO, Cleanable
 		return result;
 	}
 
+	@Override
+	public Properties getCollectionProperties(String collection) {
+		Properties result = new Properties();
+		for (CollectionDAO dao : singleRootDaos) {
+			result = dao.getCollectionProperties(collection);
+		}
+		return result;
+	}
+
 }

@@ -1,7 +1,10 @@
 package fr.aeris.commons.dao.impl;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +12,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -292,6 +296,48 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 			result = directories.get(directories.size() - 1);
 		}
 		return result;
+	}
+
+	@Override
+	public Properties getCollectionProperties(String collection) {
+		// List<OSCollectionProperty> results = new
+		// ArrayList<OSCollectionProperty>();
+		Properties props = null;
+		collection = collection.substring(collection.indexOf("/"));
+		File collectionFolder = new File(getRoot() + File.separator + collection + File.separator);
+
+		File[] found = collectionFolder.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String filename) {
+				return filename.endsWith(".properties");
+			}
+		});
+		if (found != null && found.length > 0) {
+			File propertiesFile = found[0];
+			props = getProperties(propertiesFile);
+			// for (Map.Entry<Object, Object> e : props.entrySet()) {
+			// String key = (String) e.getKey();
+			// String value = (String) e.getValue();
+			// OSCollectionProperty collProp = new OSCollectionProperty();
+			// collProp.setKey(key);
+			// collProp.setValue(value);
+			// results.add(collProp);
+			// }
+		}
+		return props;
+	}
+
+	private Properties getProperties(File propertiesFile) {
+		InputStream inputStream = null;
+		Properties prop = new Properties();
+		try {
+			inputStream = new FileInputStream(propertiesFile);
+			prop.load(inputStream);
+			inputStream.close();
+		} catch (Exception e) {
+			System.out.println("Exception: " + e);
+		}
+		return prop;
 	}
 
 }

@@ -1,10 +1,13 @@
 package fr.aeris.commons.model.elements;
 
+import java.util.Properties;
+
 public class OSCollection {
 
 	String name;
 	String firstDate;
 	String lastDate;
+	Properties properties;
 
 	public String getName() {
 		return name;
@@ -28,6 +31,14 @@ public class OSCollection {
 
 	public void setLastDate(String endDate) {
 		this.lastDate = endDate;
+	}
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 
 }

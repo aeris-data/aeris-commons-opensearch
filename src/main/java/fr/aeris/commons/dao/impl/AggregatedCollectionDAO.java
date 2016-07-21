@@ -2,6 +2,7 @@ package fr.aeris.commons.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.OSEntry;
@@ -75,6 +76,17 @@ public class AggregatedCollectionDAO implements CollectionDAO {
 		if (daos != null) {
 			for (CollectionDAO dao : daos) {
 				result = dao.getLastFolder(collection);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Properties getCollectionProperties(String collection) {
+		Properties result = new Properties();
+		if (daos != null) {
+			for (CollectionDAO dao : daos) {
+				result = dao.getCollectionProperties(collection);
 			}
 		}
 		return result;

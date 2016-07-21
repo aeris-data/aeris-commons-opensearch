@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.ServiceUnavailableException;
@@ -131,6 +132,12 @@ public class CollectionDAOCachedFtpImpl implements CollectionDAO {
 
 	@Override
 	public String getLastFolder(String collection) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Properties getCollectionProperties(String collection) {
 		// TODO Auto-generated method stub
 		return null;
 	}

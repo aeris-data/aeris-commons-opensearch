@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 
@@ -219,6 +220,12 @@ public class CollectionDAOLocalFileSystemSedooImpl implements CollectionDAO {
 
 	@Override
 	public String getLastFolder(String collection) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Properties getCollectionProperties(String collection) {
 		// TODO Auto-generated method stub
 		return null;
 	}

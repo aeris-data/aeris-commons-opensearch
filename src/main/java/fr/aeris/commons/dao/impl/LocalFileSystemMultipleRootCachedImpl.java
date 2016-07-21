@@ -26,6 +26,8 @@ import net.sf.ehcache.config.CacheConfiguration;
 
 public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cleanable {
 
+	private final static int UPDATE_DELAY_MILLIS = 3600000;
+
 	private String currentContent = "";
 	private String configFileName = "";
 	private List<LocalFileSystemSingleRootImpl> singleRootDaos = new ArrayList<>();
@@ -42,8 +44,7 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 			cacheManager.addCache("appCache");
 			cache = cacheManager.getCache("appCache");
 			CacheConfiguration config = cache.getCacheConfiguration();
-			config.setTimeToIdleSeconds(3600);
-			config.setTimeToLiveSeconds(3600);
+			config.setEternal(true);
 		}
 
 		try {
@@ -53,10 +54,11 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 		}
 	}
 
-	@Scheduled(fixedDelay = 3600000)
+	@Scheduled(fixedDelay = UPDATE_DELAY_MILLIS)
 	public void schedule() {
 		try {
 			checkNewContent();
+			updateCollections();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -68,6 +70,7 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 
 			Properties properties = new Properties();
 
+			logger.info("Lecture du fichier de collections");
 			logger.debug("Fichier de configuration: " + file);
 
 			if (file.exists()) {
@@ -113,20 +116,28 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 		List<String> result = new ArrayList<>();
 		logger.debug("Nombre de DAO " + singleRootDaos.size());
 		if (cache.get("collections") == null || cache.get("collections").isExpired()) {
-			for (CollectionDAO dao : singleRootDaos) {
-				if (dao instanceof LocalFileSystemSingleRootImpl) {
-					LocalFileSystemSingleRootImpl aux = (LocalFileSystemSingleRootImpl) dao;
-					logger.debug("getAllCollection sur le DAO de racine " + aux.getRoot() + " pour le prefixe "
-							+ aux.getCollectionPrefix());
-				}
-				result.addAll(dao.getAllCollections());
-				cache.put(new Element("collections", result));
-			}
+			result = updateCollections();
+			logger.info("Pas de cache, création du cache");
 		} else {
 			Element el = cache.get("collections");
 			result = (List<String>) el.getObjectValue();
 		}
+		return result;
+	}
 
+	private List<String> updateCollections() {
+		List<String> result = new ArrayList<>();
+		logger.info("Mise à jour des collections");
+		for (CollectionDAO dao : singleRootDaos) {
+			if (dao instanceof LocalFileSystemSingleRootImpl) {
+				LocalFileSystemSingleRootImpl aux = (LocalFileSystemSingleRootImpl) dao;
+				logger.debug("getAllCollection sur le DAO de racine " + aux.getRoot() + " pour le prefixe "
+						+ aux.getCollectionPrefix());
+			}
+			result.addAll(dao.getAllCollections());
+			cache.put(new Element("collections", result));
+		}
+		logger.info("Mise à jour des collections terminée");
 		return result;
 	}
 
@@ -179,6 +190,17 @@ public class LocalFileSystemMultipleRootCachedImpl implements CollectionDAO, Cle
 		for (CollectionDAO dao : singleRootDaos) {
 			if (collection.contains(((LocalFileSystemSingleRootImpl) dao).getCollectionPrefix())) {
 				result = dao.getLastFolder(collection);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Properties getCollectionProperties(String collection) {
+		Properties result = new Properties();
+		for (CollectionDAO dao : singleRootDaos) {
+			if (collection.contains(((LocalFileSystemSingleRootImpl) dao).getCollectionPrefix())) {
+				result = dao.getCollectionProperties(collection);
 			}
 		}
 		return result;

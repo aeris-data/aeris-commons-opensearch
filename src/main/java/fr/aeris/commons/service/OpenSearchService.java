@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.annotation.PostConstruct;
@@ -144,6 +145,15 @@ public class OpenSearchService {
 					if (lastFolder != null && !lastFolder.isEmpty()) {
 						currColl.setLastDate(lastFolder);
 					}
+
+					Properties collectionProperties = collectionDAO.getCollectionProperties(coll);
+
+					if (collectionProperties != null) {
+						currColl.setProperties(collectionProperties);
+					} else {
+						currColl.setProperties(new Properties());
+					}
+
 					responseEntity.addDetail(currColl);
 				}
 
