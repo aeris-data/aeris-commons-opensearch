@@ -30,8 +30,10 @@ import org.apache.abdera.factory.Factory;
 import org.apache.abdera.model.Element;
 import org.apache.abdera.model.ExtensibleElement;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -48,8 +50,6 @@ import fr.aeris.commons.utils.CacheCleaner;
 import fr.aeris.commons.utils.HttpConstants;
 import fr.aeris.commons.utils.NamespaceConstants;
 import fr.aeris.commons.utils.OpenSearchConstants;
-import fr.sedoo.commons.spring.SpringBeanFactory;
-import fr.sedoo.commons.util.StringUtil;
 
 @Path("/opensearch")
 public class OpenSearchService {
@@ -58,6 +58,10 @@ public class OpenSearchService {
 
 	private Factory abderaFactory;
 	private ResponseFormatter formatter;
+	
+	CacheCleaner cacheCleaner;
+	
+	@Autowired
 	private CollectionDAO collectionDAO;
 
 	@Context
@@ -65,10 +69,6 @@ public class OpenSearchService {
 
 	@PostConstruct
 	private void init() {
-		if (collectionDAO == null) {
-			SpringBeanFactory springBeanFactory = new SpringBeanFactory();
-			collectionDAO = (CollectionDAO) springBeanFactory.getBeanByName(CollectionDAO.BEAN_NAME);
-		}
 		abderaFactory = Abdera.getInstance().getFactory();
 	}
 
@@ -96,9 +96,7 @@ public class OpenSearchService {
 		// Si le code d'authorisation correspond on vide le cache
 		if (ident != null && ident.equals(CacheCleaner.getSecret())) {
 			log.info(httpRequest.getRemoteAddr() + " requested 'cleanCache' service");
-			SpringBeanFactory springBeanFactory = new SpringBeanFactory();
-			CacheCleaner cleaner = (CacheCleaner) springBeanFactory.getBeanByName("CacheCleaner");
-			String message = cleaner.cleanAll();
+			String message = cacheCleaner.cleanAll();
 			return Response.status(200).entity(message).build();
 		} else {
 			log.warn(httpRequest.getRemoteAddr() + " requested 'cleanCache' service with incorrect authorization");
@@ -286,7 +284,7 @@ public class OpenSearchService {
 		List<OSEntry> result = new ArrayList<OSEntry>();
 		String responseMediatype = MediaType.APPLICATION_JSON;
 
-		if (StringUtil.trimToEmpty(endDate).isEmpty() || endDate.equalsIgnoreCase("today")) {
+		if (StringUtils.trimToEmpty(endDate).isEmpty() || endDate.equalsIgnoreCase("today")) {
 			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 			endDate = df.format(new Date());
 		}
@@ -314,7 +312,7 @@ public class OpenSearchService {
 					.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 		} catch (Exception e) {
 			log.error(httpRequest.getRemoteAddr() + " made a bad request: " + httpRequest.getRequestURL() + "?"
-					+ StringUtil.trimToEmpty(httpRequest.getQueryString()));
+					+ StringUtils.trimToEmpty(httpRequest.getQueryString()));
 			return Response.status(HttpURLConnection.HTTP_BAD_REQUEST).header("Access-Control-Allow-Origin", "*")
 					.header("Access-Control-Allow-Headers",
 							"origin, content-type, accept, authorization,X-Requested-With")
@@ -330,7 +328,7 @@ public class OpenSearchService {
 			responseMediatype = MediaType.APPLICATION_ATOM_XML;
 		} else {
 			log.error(httpRequest.getRemoteAddr() + " made a bad request: " + httpRequest.getRequestURL() + "?"
-					+ StringUtil.trimToEmpty(httpRequest.getQueryString()));
+					+ StringUtils.trimToEmpty(httpRequest.getQueryString()));
 			return Response.status(HttpURLConnection.HTTP_BAD_REQUEST)
 					.entity("Incorrect url format parameter. Must be JSON or ATOM")
 					.header("Access-Control-Allow-Origin", "*")

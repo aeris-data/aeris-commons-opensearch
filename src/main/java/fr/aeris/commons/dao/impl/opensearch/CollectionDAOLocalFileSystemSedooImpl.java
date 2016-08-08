@@ -1,32 +1,34 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.opensearch;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.Media;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.OpensearchUtils;
-import fr.sedoo.commons.util.ListUtil;
 
-public class CollectionDAOLocalSatmosImpl implements CollectionDAO {
+public class CollectionDAOLocalFileSystemSedooImpl implements CollectionDAO {
 
 	private final static String FILENAME_SEPARATOR = "_";
-
 	private String root;
 
 	@PostConstruct
 	private void init() {
-		root = "/home/klein/Documents/rootFolder";
+		root = "/home/klein/Documents/rootFolder/aeroclo";
 	}
 
 	@Override
@@ -63,16 +65,11 @@ public class CollectionDAOLocalSatmosImpl implements CollectionDAO {
 				folder.append(File.separator);
 				folder.append(collection);
 				folder.append(File.separator);
-				folder.append("quicklooks");
-				folder.append(File.separator);
-				folder.append(year);
-				folder.append(File.separator);
-				folder.append(month);
-				folder.append(File.separator);
-				folder.append(day);
+				folder.append(dateToFolderName(year + month + day));
 
-				// Ajout des granules au resultat et passage au jour suivant
 				granules.addAll(listFiles(folder.toString(), tempCalendar));
+
+				// Passage au jour suivant
 				tempCalendar.add(Calendar.DATE, 1);
 			}
 		}
@@ -120,24 +117,30 @@ public class CollectionDAOLocalSatmosImpl implements CollectionDAO {
 					try {
 						// Si le fichier est une image
 						if (isAnImage(testedFile)) {
-							OSEntry entry = new OSEntry();
-							entry.setMedia(new Media(testedFile.getAbsolutePath(), "QUICKLOOK"));
-
 							// Extraction de la collection et du type depuis le
 							// nom du fichier
 							String filenameWithoutExt = FilenameUtils.removeExtension(name);
-							List<String> filenameParts = tokenizeFilename(filenameWithoutExt);
+							List<String> filenameParts = Arrays
+									.asList(StringUtils.split(filenameWithoutExt, FILENAME_SEPARATOR));
 
-							String parentIdentifier = filenameParts.get(0);
+							OSEntry entry = new OSEntry();
+							entry.setMedia(new Media(testedFile.getAbsolutePath(), "QUICKLOOK"));
+
+							String parentIdentifier = filenameParts.get(1);
 							entry.setParentIdentifier(parentIdentifier);
 
-							String type = filenameParts.get(1);
+							String type = filenameParts.get(2);
 							entry.setType(type);
 
-							// Extraction de la date et de l'heure
-							int hour = Integer.valueOf(filenameParts.get(2)) / 100;
-							calendar.set(Calendar.HOUR_OF_DAY, hour);
-							entry.setDate(calendar.getTime());
+							// Extraction de la date et de l'heure int hour
+							try {
+								SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+								Date date = formatter.parse(filenameParts.get(0));
+								calendar.setTime(date);
+								entry.setDate(calendar.getTime());
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 
 							// Ajout du granule
 							granules.add(entry);
@@ -157,27 +160,29 @@ public class CollectionDAOLocalSatmosImpl implements CollectionDAO {
 	 * @param folder
 	 * @return
 	 */
-	private List<String> listSubFolders(String folder) {
+	protected List<String> listSubFolders(String folder) {
+		List<String> results = new ArrayList<String>();
 		File file = new File(folder);
 		String[] names = file.list();
-		List<String> subFolders = new ArrayList<String>();
 		for (String name : names) {
 			File testedFile = new File(folder + File.separator + name);
 			if (testedFile.isDirectory()) {
-				subFolders.add(name);
+				String mainFolder = name;
+				String[] subFiles = testedFile.list();
+				if (subFiles.length > 0) {
+					for (String subName : subFiles) {
+						File subFile = new File(folder + File.separator + name + File.separator + subName);
+						if (subFile.isDirectory()) {
+							String subFolder = subName;
+							results.add(mainFolder + "/" + subFolder);
+						}
+					}
+				} else {
+					results.add(mainFolder);
+				}
 			}
 		}
-		return subFolders;
-	}
-
-	/**
-	 * Tokenize passed string with FILENAME_SEPARATOR
-	 * 
-	 * @param filename
-	 * @return
-	 */
-	private List<String> tokenizeFilename(String filename) {
-		return ListUtil.fromSeparatedString(filename, FILENAME_SEPARATOR);
+		return results;
 	}
 
 	/**
@@ -193,6 +198,10 @@ public class CollectionDAOLocalSatmosImpl implements CollectionDAO {
 		String filename = file.getName();
 		String fileType = java.nio.file.Files.probeContentType(FileSystems.getDefault().getPath(folder, filename));
 		return fileType.contains("image/") ? true : false;
+	}
+
+	private String dateToFolderName(String date) {
+		return date.replace("-", "");
 	}
 
 	@Override

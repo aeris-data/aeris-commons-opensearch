@@ -1,4 +1,4 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.opensearch;
 
 import java.util.ArrayList;
 import java.util.List;

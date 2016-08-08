@@ -1,4 +1,4 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.opensearch;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

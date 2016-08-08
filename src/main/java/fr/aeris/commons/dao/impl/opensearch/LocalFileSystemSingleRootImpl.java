@@ -1,4 +1,4 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.opensearch;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +25,6 @@ import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.CollectionFolderValidator;
 import fr.aeris.commons.utils.FileUtils;
 import fr.aeris.commons.utils.OpensearchUtils;
-import fr.sedoo.commons.util.ListUtil;
-import fr.sedoo.commons.util.StringUtil;
 
 public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
@@ -50,7 +49,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 	@Override
 	public List<OSEntry> findAll(List<String> collections, String startDate, String endDate) {
 
-		if (StringUtil.isEmpty(getRoot())) {
+		if (StringUtils.isEmpty(getRoot())) {
 			return new ArrayList<>();
 		}
 
@@ -139,7 +138,8 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 							// Extraction de la collection et du type depuis le
 							// nom du fichier
 							String filenameWithoutExt = FilenameUtils.removeExtension(name);
-							List<String> filenameParts = tokenizeFilename(filenameWithoutExt);
+							List<String> filenameParts = Arrays
+									.asList(StringUtils.split(filenameWithoutExt, FILENAME_SEPARATOR));
 							OSEntry entry = new OSEntry();
 							String mediaPath = IMAGE_SERVICE_URL + testedFile.getAbsolutePath();
 							entry.setMedia(new Media(mediaPath, "QUICKLOOK"));
@@ -199,16 +199,6 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 			}
 		}
 		return results;
-	}
-
-	/**
-	 * Tokenize passed string with FILENAME_SEPARATOR
-	 * 
-	 * @param filename
-	 * @return
-	 */
-	private List<String> tokenizeFilename(String filename) {
-		return ListUtil.fromSeparatedString(filename, FILENAME_SEPARATOR);
 	}
 
 	/**

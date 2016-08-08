@@ -4,7 +4,8 @@ import java.util.Calendar;
 
 import javax.xml.bind.DatatypeConverter;
 
-import fr.sedoo.commons.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
+
 
 public class OpensearchUtils {
 
@@ -20,7 +21,7 @@ public class OpensearchUtils {
 	 * @return java.util.Date formatted date
 	 */
 	public static Calendar dateFromIso8601(String date) {
-		if (StringUtil.isEmpty(date)) {
+		if (StringUtils.isEmpty(date)) {
 			return null;
 		} else {
 			return DatatypeConverter.parseDateTime(date);

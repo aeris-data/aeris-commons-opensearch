@@ -1,4 +1,4 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.opensearch;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
@@ -18,7 +19,6 @@ import fr.aeris.commons.dao.CollectionDAO;
 import fr.aeris.commons.model.elements.Media;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.OpensearchUtils;
-import fr.sedoo.commons.util.ListUtil;
 
 public class CollectionDAOFtpImpl implements CollectionDAO {
 
@@ -173,7 +173,7 @@ public class CollectionDAOFtpImpl implements CollectionDAO {
 							// Extraction de la collection et du type depuis le
 							// nom du fichier
 							String filenameWithoutExt = FilenameUtils.removeExtension(name);
-							List<String> filenameParts = tokenizeFilename(filenameWithoutExt);
+							List<String> filenameParts = Arrays.asList(StringUtils.split(filenameWithoutExt, FILENAME_SEPARATOR));
 
 							OSEntry entry = new OSEntry();
 							String link = BASE_URL + collection + "/" + filenameParts.get(0) + "/" + file.getName();
@@ -206,10 +206,6 @@ public class CollectionDAOFtpImpl implements CollectionDAO {
 			e.printStackTrace();
 		}
 		return results;
-	}
-
-	private List<String> tokenizeFilename(String filename) {
-		return ListUtil.fromSeparatedString(filename, FILENAME_SEPARATOR);
 	}
 
 	@Override

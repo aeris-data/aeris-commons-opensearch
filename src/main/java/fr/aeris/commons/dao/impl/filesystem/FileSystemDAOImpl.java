@@ -1,4 +1,4 @@
-package fr.aeris.commons.dao.impl;
+package fr.aeris.commons.dao.impl.filesystem;
 
 import java.io.File;
 import java.util.ArrayList;

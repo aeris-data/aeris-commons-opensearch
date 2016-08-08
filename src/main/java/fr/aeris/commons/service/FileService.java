@@ -36,14 +36,14 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.aeris.commons.dao.FileSystemDAO;
-import fr.aeris.commons.dao.impl.FileSystemDAOImpl;
+import fr.aeris.commons.dao.impl.filesystem.FileSystemDAOImpl;
 import fr.aeris.commons.model.elements.FileObject;
-import fr.sedoo.commons.spring.SpringBeanFactory;
 
 @Path("/files")
 public class FileService {
@@ -53,7 +53,9 @@ public class FileService {
 	// Do NOT modify
 	private final String USER_AGENT = "Mozilla/5.0";
 
+	@Autowired
 	FileSystemDAO fileSystemDao;
+	
 	FileSystemDAOImpl dao;
 	String currentFolder;
 	String token;
@@ -64,10 +66,6 @@ public class FileService {
 
 	@PostConstruct
 	private void init() {
-		if (fileSystemDao == null) {
-			SpringBeanFactory springBeanFactory = new SpringBeanFactory();
-			fileSystemDao = (FileSystemDAO) springBeanFactory.getBeanByName(FileSystemDAO.BEAN_NAME);
-		}
 		dao = (FileSystemDAOImpl) fileSystemDao;
 
 	}
