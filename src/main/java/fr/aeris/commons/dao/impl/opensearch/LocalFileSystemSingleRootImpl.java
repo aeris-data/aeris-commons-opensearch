@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +15,10 @@ import java.util.Properties;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +27,6 @@ import fr.aeris.commons.model.elements.Media;
 import fr.aeris.commons.model.elements.OSEntry;
 import fr.aeris.commons.utils.CollectionFolderValidator;
 import fr.aeris.commons.utils.FileUtils;
-import fr.aeris.commons.utils.OpensearchUtils;
 
 public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
@@ -53,29 +55,31 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 			return new ArrayList<>();
 		}
 
-		Calendar start = OpensearchUtils.dateFromIso8601(startDate);
-		Calendar end = OpensearchUtils.dateFromIso8601(endDate);
+		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+
+		DateTime start = formatter.parseDateTime(startDate);
+		DateTime end = formatter.parseDateTime(endDate);
+		DateTime tempCalendar;
+
+		int daysBetween = Days.daysBetween(start, end).getDays();
 
 		List<OSEntry> granules = new ArrayList<OSEntry>();
 
-		int daysBetween = OpensearchUtils.daysBetween(start.getTimeInMillis(), end.getTimeInMillis());
-
-		Calendar tempCalendar;
 		for (String collection : collections) {
 
 			int aux = collection.indexOf(File.separator);
 
 			collection = collection.substring(aux + 1);
 
-			tempCalendar = OpensearchUtils.dateFromIso8601(startDate);
+			tempCalendar = start;
 			for (int i = 0; i <= daysBetween; i++) {
-				int year = tempCalendar.get(Calendar.YEAR);
+				int year = tempCalendar.getYear();
 
-				// Month + 1 car janvier = 0
-				String month = String.format("%02d", tempCalendar.get(Calendar.MONTH) + 1);
+				// Month
+				String month = String.format("%02d", tempCalendar.getMonthOfYear());
 
 				// Day
-				String day = String.format("%02d", tempCalendar.get(Calendar.DAY_OF_MONTH));
+				String day = String.format("%02d", tempCalendar.getDayOfMonth());
 
 				// Creation du chemin vers le repertoire
 				StringBuilder folder = new StringBuilder();
@@ -88,7 +92,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 				granules.addAll(listFiles(collection, folder.toString(), tempCalendar));
 
 				// Passage au jour suivant
-				tempCalendar.add(Calendar.DATE, 1);
+				tempCalendar = tempCalendar.plusDays(1);
 			}
 		}
 
@@ -123,7 +127,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 	 * @param calendar
 	 * @return
 	 */
-	private List<OSEntry> listFiles(String collection, String folder, Calendar calendar) {
+	private List<OSEntry> listFiles(String collection, String folder, DateTime calendar) {
 		File file = new File(folder);
 		String[] names = file.list();
 		List<OSEntry> granules = new ArrayList<OSEntry>();
@@ -155,8 +159,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 								SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
 								String dateString = filenameParts.get(0).substring(0, 8);
 								Date date = formatter.parse(dateString);
-								calendar.setTime(date);
-								entry.setDate(calendar.getTime());
+								entry.setDate(date);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

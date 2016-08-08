@@ -112,20 +112,6 @@
 
 	</dependencies>
 
-<!-- 	<repositories>
-
-		<repository>
-			<id>sourcesup-releases</id>
-			<url>http://sourcesup.renater.fr/nexus/content/repositories/reposedoo-releases/</url>
-		</repository>
-
-		<repository>
-			<id>sourcesup-snapshots</id>
-			<url>http://sourcesup.renater.fr/nexus/content/repositories/reposedoo-snapshots/</url>
-		</repository>
-
-	</repositories> -->
-
 	<distributionManagement>
 		<repository>
 			<id>sourcesup</id>
