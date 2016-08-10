@@ -58,9 +58,9 @@ public class OpenSearchService {
 
 	private Factory abderaFactory;
 	private ResponseFormatter formatter;
-	
+
 	CacheCleaner cacheCleaner;
-	
+
 	@Autowired
 	private CollectionDAO collectionDAO;
 
@@ -121,8 +121,8 @@ public class OpenSearchService {
 					.declareNS(NamespaceConstants.EO_NS, NamespaceConstants.EO_PREFIX);
 			// Definition des parametres du fichier de description
 			openSearchDescription.setShortName("SATMOS Search");
-			openSearchDescription.setDescription("Description du moteur de recherche");
-			openSearchDescription.setLanguage("fr");
+			openSearchDescription.setDescription("Search engine description");
+			openSearchDescription.setLanguage("en");
 
 			// Creation des urls
 			configureOpenSearchUrls(openSearchDescription);

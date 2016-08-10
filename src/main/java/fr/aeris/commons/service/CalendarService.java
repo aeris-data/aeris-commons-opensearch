@@ -13,16 +13,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.joda.time.DateTime;
-import org.joda.time.Days;
-import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import fr.aeris.commons.dao.CollectionDAO;
-import fr.aeris.commons.model.elements.OSEntry;
+import fr.aeris.commons.dao.CalendarDAO;
+import fr.aeris.commons.model.elements.CalendarDay;
+import fr.aeris.commons.model.elements.CalendarResponse;
 
 @Path("/calendar")
 public class CalendarService {
@@ -30,7 +29,7 @@ public class CalendarService {
 	private final static Logger log = LoggerFactory.getLogger(CalendarService.class);
 
 	@Autowired
-	private CollectionDAO collectionDAO;
+	private CalendarDAO calendarDAO;
 
 	@Context
 	HttpServletRequest httpRequest;
@@ -50,28 +49,23 @@ public class CalendarService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response checkAvailability(@QueryParam("collection") String collection, @QueryParam("start") String start,
 			@QueryParam("end") String end) {
-		List<String> coll = new ArrayList<>();
-		List<OSEntry> granules = new ArrayList<>();
-		coll.add(collection);
-		granules = collectionDAO.findAll(coll, start, end);
+		List<CalendarDay> results = new ArrayList<>();
 
 		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
 		DateTime startDate;
 		DateTime endDate;
-		int days = 0;
 		startDate = formatter.parseDateTime(start);
-		endDate = formatter.parseDateTime(end);
-		Interval interval = new Interval(startDate, endDate);
-		days = Days.daysBetween(startDate, endDate).getDays();
+		endDate = formatter.parseDateTime(end).plusDays(1);
 
-		for (OSEntry granule : granules) {
-			System.out.println(interval.contains(new DateTime(granule.getDate())));
-		}
+		results = calendarDAO.checkPeriod(collection, startDate, endDate);
 
-		String resp = String.valueOf(days);
+		CalendarResponse resp = new CalendarResponse();
+		resp.setEvents(results);
 
-		return Response.ok().entity(resp).build();
+		return Response.ok().entity(resp).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
 }
