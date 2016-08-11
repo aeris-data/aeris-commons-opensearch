@@ -3,13 +3,10 @@ package fr.aeris.commons.dao.impl.opensearch;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -30,7 +27,7 @@ import fr.aeris.commons.utils.FileUtils;
 
 public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
-	private final static String IMAGE_SERVICE_URL = "http://opensearch.sedoo.fr/rest/images/image?q=";
+	private final static String IMAGE_SERVICE_URL = "http://opensearch.sedoo.fr/rest/files/getimage?q=";
 	private final static String FILENAME_SEPARATOR = "_";
 	private String root;
 	private CollectionFolderValidator collectionFolderValidator;
@@ -138,7 +135,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 				if (!testedFile.isDirectory()) {
 					try {
 						// Si le fichier est une image
-						if (isAnImage(testedFile)) {
+						if (FileUtils.isAnImage(testedFile)) {
 							// Extraction de la collection et du type depuis le
 							// nom du fichier
 							String filenameWithoutExt = FilenameUtils.removeExtension(name);
@@ -156,11 +153,20 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
 							// Extraction de la date et de l'heure int hour
 							try {
-								SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-								String dateString = filenameParts.get(0).substring(0, 8);
-								Date date = formatter.parse(dateString);
-								entry.setDate(date);
+								String dateString = filenameParts.get(0);
+								String hourString = filenameParts.get(3).substring(0, 3);
+
+								DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyyMMdd");
+								DateTimeFormatter hourFormatter = DateTimeFormat.forPattern("HHmm");
+								DateTime date = dateFormatter.parseDateTime(dateString);
+								DateTime hour = hourFormatter.parseDateTime(hourString);
+								date = date.hourOfDay().setCopy(hour.getHourOfDay());
+								date = date.minuteOfHour().setCopy(hour.getMinuteOfHour());
+
+								entry.setDate(date.toDate());
 							} catch (Exception e) {
+								logger.error("Mauvais format de fichier: " + name
+										+ " - Impossible de récupérer la date et l'heure");
 								e.printStackTrace();
 							}
 
@@ -204,25 +210,6 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 		return results;
 	}
 
-	/**
-	 * Define if the passed file is an image
-	 * 
-	 * @param file
-	 * @return true if it is an image file, false if not
-	 * @throws IOException
-	 */
-	private boolean isAnImage(File file) throws IOException {
-		List<String> imagesExt = new ArrayList<String>();
-		imagesExt.addAll(Arrays.asList("jpg", "png", "gif", "bmp"));
-		String filename = file.getName();
-		for (String ext : imagesExt) {
-			if (FilenameUtils.getExtension(filename).equalsIgnoreCase(ext)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private String dateToFolderName(String date) {
 		return date.replace("-", "");
 	}
@@ -251,27 +238,9 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 		return collectionPrefix;
 	}
 
-	private ArrayList<String> listSubDirs(String collection) {
-		ArrayList<String> results = new ArrayList<String>();
-		collection = collection.substring(collection.indexOf("/"));
-		File file = new File(getRoot() + "/" + collection);
-		if (file.exists()) {
-			String[] directories = file.list();
-			if (directories != null) {
-				for (String dir : directories) {
-					File testedFile = new File(getRoot() + "/" + collection + "/" + dir);
-					if (testedFile.isDirectory()) {
-						results.add(dir);
-					}
-				}
-			}
-		}
-		return results;
-	}
-
 	@Override
 	public String getFirstFolder(String collection) {
-		ArrayList<String> directories = listSubDirs(collection);
+		ArrayList<String> directories = FileUtils.listSubDirsNames(collection, getRoot());
 		String result = "";
 		if (directories.size() > 0) {
 			Collections.sort(directories);
@@ -282,7 +251,7 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
 	@Override
 	public String getLastFolder(String collection) {
-		ArrayList<String> directories = listSubDirs(collection);
+		ArrayList<String> directories = FileUtils.listSubDirsNames(collection, getRoot());
 		String result = "";
 		if (directories.size() > 0) {
 			Collections.sort(directories);
@@ -293,8 +262,6 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 
 	@Override
 	public Properties getCollectionProperties(String collection) {
-		// List<OSCollectionProperty> results = new
-		// ArrayList<OSCollectionProperty>();
 		Properties props = null;
 		collection = collection.substring(collection.indexOf("/"));
 		File collectionFolder = new File(getRoot() + File.separator + collection + File.separator);
@@ -308,14 +275,6 @@ public class LocalFileSystemSingleRootImpl implements CollectionDAO {
 		if (found != null && found.length > 0) {
 			File propertiesFile = found[0];
 			props = getProperties(propertiesFile);
-			// for (Map.Entry<Object, Object> e : props.entrySet()) {
-			// String key = (String) e.getKey();
-			// String value = (String) e.getValue();
-			// OSCollectionProperty collProp = new OSCollectionProperty();
-			// collProp.setKey(key);
-			// collProp.setValue(value);
-			// results.add(collProp);
-			// }
 		}
 		return props;
 	}

@@ -83,8 +83,9 @@ public class OpenSearchService {
 	}
 
 	/*
-	 * Clean all caches. IMPORTANT: You need to provide a "Authorization" header
-	 * with the password in your request to be allowed to clean caches.
+	 * Clean all caches. IMPORTANT: You need to provide an "Authorization"
+	 * header with the password (defined in BeanLocation.xml) in your request to
+	 * be allowed to clean caches.
 	 */
 	@GET
 	@Path("/cleanCache")
@@ -112,7 +113,6 @@ public class OpenSearchService {
 	public Response description(@PathParam("format") String format) {
 		Response response;
 		try {
-			Factory abderaFactory = Abdera.getInstance().getFactory();
 			OpenSearchDescription openSearchDescription = abderaFactory
 					.newExtensionElement(OpenSearchConstants.OPENSEARCH_DESCRIPTION);
 			// Ajout des namespaces
@@ -127,7 +127,7 @@ public class OpenSearchService {
 			// Creation des urls
 			configureOpenSearchUrls(openSearchDescription);
 
-			if (format != null && format.equalsIgnoreCase("json")) {
+			if (StringUtils.isNotBlank(format) && format.equalsIgnoreCase("json")) {
 				List<String> collections = collectionDAO.getAllCollections();
 				JsonCollectionsResponse responseEntity = new JsonCollectionsResponse();
 				URL baseUrl = new URL(httpRequest.getRequestURL().toString());
@@ -136,11 +136,11 @@ public class OpenSearchService {
 					OSCollection currColl = new OSCollection();
 					currColl.setName(coll);
 					String firstFolder = collectionDAO.getFirstFolder(coll);
-					if (firstFolder != null && !firstFolder.isEmpty()) {
+					if (StringUtils.isNotBlank(firstFolder)) {
 						currColl.setFirstDate(firstFolder);
 					}
 					String lastFolder = collectionDAO.getLastFolder(coll);
-					if (lastFolder != null && !lastFolder.isEmpty()) {
+					if (StringUtils.isNotBlank(lastFolder)) {
 						currColl.setLastDate(lastFolder);
 					}
 
@@ -170,7 +170,10 @@ public class OpenSearchService {
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
-			response = Response.serverError().entity(e.getMessage()).build();
+			response = Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Headers",
+							"origin, content-type, accept, authorization,X-Requested-With")
+					.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 		}
 
 		return response;
@@ -234,7 +237,7 @@ public class OpenSearchService {
 	private StringBuilder buildUrl(URL baseUrl, String format) {
 		StringBuilder urlTemplate = new StringBuilder(baseUrl.toString());
 		// Eviter d'avoir 2 slash si le format n'est pas définit
-		if (!format.isEmpty()) {
+		if (StringUtils.isNotEmpty(format)) {
 			urlTemplate.append("/" + format + "/collection");
 		} else {
 			urlTemplate.append("/collection");
@@ -290,11 +293,12 @@ public class OpenSearchService {
 		}
 
 		// Decoupage searchTerms
-		if (searchTerms != null && !searchTerms.isEmpty())
+		if (StringUtils.isNotBlank(searchTerms)) {
 			terms = tokenizeParam(searchTerms);
+		}
 		try {
 			// Decoupage collections
-			if (parentIdentifier != null && !parentIdentifier.isEmpty())
+			if (StringUtils.isNotBlank(parentIdentifier))
 				collections = tokenizeParam(parentIdentifier);
 			else
 				collections = collectionDAO.getAllCollections();

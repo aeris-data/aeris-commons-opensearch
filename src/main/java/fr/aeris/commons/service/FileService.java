@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.FileNameMap;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -14,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -55,7 +56,7 @@ public class FileService {
 
 	@Autowired
 	FileSystemDAO fileSystemDao;
-	
+
 	FileSystemDAOImpl dao;
 	String currentFolder;
 	String token;
@@ -63,12 +64,6 @@ public class FileService {
 
 	@Context
 	HttpServletRequest httpRequest;
-
-	@PostConstruct
-	private void init() {
-		dao = (FileSystemDAOImpl) fileSystemDao;
-
-	}
 
 	@GET
 	@Path("/list")
@@ -90,21 +85,25 @@ public class FileService {
 				FileObject fileObject = new FileObject();
 				String filePath = file.getAbsolutePath().replace(baseDir, "");
 				fileObject.setPath(filePath);
+
 				if (file.isDirectory()) {
 					fileObject.setType("folder");
 				} else {
 					fileObject.setType("file");
 				}
+
 				fileObject.setName(file.getName());
 				fileObject.setExtension(FilenameUtils.getExtension(file.getName()));
 				fileObject.setSize(file.length() / 1024);
 				String baseUrl = httpRequest.getRequestURL().toString();
 				int endIndex = baseUrl.lastIndexOf("/");
+
 				if (endIndex != -1 && fileObject.getType().equals("file")) {
 					String url = baseUrl.substring(0, endIndex);
 					url = url + "/get?path=" + file.getAbsolutePath();
 					fileObject.setUrl(url);
 				}
+
 				Date timestamp = new Date(file.lastModified());
 				fileObject.setModified(sdf.format(timestamp));
 				results.add(fileObject);
@@ -122,6 +121,7 @@ public class FileService {
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
+	@SuppressWarnings("deprecation")
 	@POST
 	@Path("/list")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -174,11 +174,26 @@ public class FileService {
 			response = Response.ok(file, MediaType.APPLICATION_OCTET_STREAM).header("Content-Disposition",
 					"attachment; filename='" + file.getName() + "'");
 		} else {
-			response = Response.ok().status(Status.NO_CONTENT).entity("No content");
+			response = Response.noContent().status(Status.NO_CONTENT).entity("No content");
 		}
 		return response.header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
+	}
+
+	@GET
+	@Path("/getimage")
+	public Response serveImage(@QueryParam("q") String filepath) {
+		File file = new File(filepath);
+		ResponseBuilder response;
+		if (file.exists() && file.getAbsolutePath().startsWith(dao.getImgBaseDirectory())) {
+			FileNameMap fileNameMap = URLConnection.getFileNameMap();
+			String type = fileNameMap.getContentTypeFor(filepath);
+			response = Response.ok(file, type);
+		} else {
+			response = Response.noContent();
+		}
+		return response.build();
 	}
 
 	@GET

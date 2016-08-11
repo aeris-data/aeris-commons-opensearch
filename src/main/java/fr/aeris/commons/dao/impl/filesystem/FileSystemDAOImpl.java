@@ -10,6 +10,7 @@ import fr.aeris.commons.dao.FileSystemDAO;
 public class FileSystemDAOImpl implements FileSystemDAO {
 
 	String baseDirectory = "";
+	String imgBaseDirectory;
 
 	public String getBaseDirectory() {
 		return baseDirectory;
@@ -20,6 +21,14 @@ public class FileSystemDAOImpl implements FileSystemDAO {
 			baseDirectory += File.separator;
 		}
 		this.baseDirectory = baseDirectory;
+	}
+
+	public String getImgBaseDirectory() {
+		return imgBaseDirectory;
+	}
+
+	public void setImgBaseDirectory(String imgBaseDirectory) {
+		this.imgBaseDirectory = imgBaseDirectory;
 	}
 
 	@Override
