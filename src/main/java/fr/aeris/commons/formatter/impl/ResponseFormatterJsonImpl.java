@@ -13,8 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.aeris.commons.formatter.ResponseConstants;
 import fr.aeris.commons.formatter.ResponseFormatter;
-import fr.aeris.commons.model.elements.JsonResponse;
-import fr.aeris.commons.model.elements.OSEntry;
+import fr.aeris.commons.model.elements.opensearch.JsonResponse;
+import fr.aeris.commons.model.elements.opensearch.OSEntry;
 import fr.aeris.commons.utils.OSEntryComparator;
 
 public class ResponseFormatterJsonImpl implements ResponseFormatter {

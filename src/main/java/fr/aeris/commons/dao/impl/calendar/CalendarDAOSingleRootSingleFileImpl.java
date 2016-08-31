@@ -12,8 +12,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import fr.aeris.commons.dao.CalendarDAO;
-import fr.aeris.commons.model.elements.CalendarDay;
-import fr.aeris.commons.model.elements.CalendarDayStatus;
+import fr.aeris.commons.model.elements.calendar.CalendarDay;
+import fr.aeris.commons.model.elements.calendar.CalendarDayStatus;
 
 public class CalendarDAOSingleRootSingleFileImpl implements CalendarDAO {
 

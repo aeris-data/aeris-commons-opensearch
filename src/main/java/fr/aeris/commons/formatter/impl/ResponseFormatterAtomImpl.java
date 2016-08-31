@@ -15,8 +15,8 @@ import org.apache.commons.net.ntp.TimeStamp;
 
 import fr.aeris.commons.formatter.ResponseConstants;
 import fr.aeris.commons.formatter.ResponseFormatter;
-import fr.aeris.commons.model.elements.Group;
-import fr.aeris.commons.model.elements.OSEntry;
+import fr.aeris.commons.model.elements.opensearch.Group;
+import fr.aeris.commons.model.elements.opensearch.OSEntry;
 import fr.aeris.commons.utils.NamespaceConstants;
 import fr.aeris.commons.utils.OSEntryComparator;
 

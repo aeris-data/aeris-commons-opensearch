@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 
-import fr.aeris.commons.model.elements.CalendarDay;
+import fr.aeris.commons.model.elements.calendar.CalendarDay;
 
 public interface CalendarDAO {
 

@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
-import fr.aeris.commons.model.elements.OSEntry;
+import fr.aeris.commons.model.elements.opensearch.OSEntry;
 
 /**
  * Sort the entries by date and hour

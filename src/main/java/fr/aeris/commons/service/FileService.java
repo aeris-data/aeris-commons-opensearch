@@ -46,6 +46,23 @@ import fr.aeris.commons.dao.FileSystemDAO;
 import fr.aeris.commons.dao.impl.filesystem.FileSystemDAOImpl;
 import fr.aeris.commons.model.elements.FileObject;
 
+/**
+ * File service
+ * 
+ * Routes:
+ * 
+ * - GET: files/list : List all files at a given path
+ * 
+ * - POST: files/list : Send file(s) in the given folder
+ * 
+ * - GET: files/get : get a file as octet stream
+ * 
+ * - GET: files/getimage : get an image
+ * 
+ * - GET: files/view : get a pdf / html file
+ * 
+ *
+ */
 @Path("/files")
 public class FileService {
 
@@ -65,13 +82,47 @@ public class FileService {
 	@Context
 	HttpServletRequest httpRequest;
 
+	
+	/**
+	 * @api {get} /files/list Lister les fichiers contenus dans un dossier
+	 * @apiGroup Files
+	 * @apiName listFiles
+	 * 
+	 * @apiParam {String} path Chemin du dossier à analyser
+	 * 
+	 * @apiSuccess {Array} Response Description de l'ensemble des fichiers et dossiers disponibles
+	 * @apiSuccessExample {json} Success-Response:
+	 *  HTTP/1.1 200 OK
+	 *  [
+		  {
+		    "type": "folder",
+		    "name": "folderName",
+		    "extension": "",
+		    "path": "folderPathFromRoot",
+		    "url": "",
+		    "size": folderSize,
+		    "modified": "YYYY-MM-DD HH:mm"
+		  },
+		  {
+		    "type": "file",
+		    "name": "fileName",
+		    "extension": "fileExtension",
+		    "path": "filePathFromRoot",
+		    "url": "http://yourserver.com/files/get?path=filePath",
+		    "size": fileSize,
+		    "modified": "YYYY_MM-DD HH:mm"
+		  }
+		]
+	 * @apiError (Error) 204_NoContent Aucun fichier ou dossier à afficher
+	 * 
+	 */
 	@GET
 	@Path("/list")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response listFiles(@QueryParam("path") String path) {
 		List<FileObject> results = new ArrayList<>();
 		ResponseBuilder response = null;
-		String baseDir = dao.getBaseDirectory();
+		String baseDir = ((FileSystemDAOImpl) fileSystemDao).getBaseDirectory();
 		currentFolder = baseDir + path;
 		if (!path.endsWith(File.separator)) {
 			path = path + File.separator;
@@ -102,6 +153,8 @@ public class FileService {
 					String url = baseUrl.substring(0, endIndex);
 					url = url + "/get?path=" + file.getAbsolutePath();
 					fileObject.setUrl(url);
+				} else {
+					fileObject.setUrl("");
 				}
 
 				Date timestamp = new Date(file.lastModified());
@@ -121,6 +174,23 @@ public class FileService {
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
+	
+	/**
+	 * @api {post} /files/list Envoyer des fichiers dans un dossier
+	 * @apiGroup Files
+	 * @apiName uploadFiles
+	 * 
+	 * @apiParam {FormDataMultiPart} multiPart Données de formulaire contenant les champs:
+	 *  - file: Fichier à envoyer
+	 *  - folder: Dossier dans lequel placer les fichiers
+	 *  - token-provider: Service de validation des tokens
+	 *  - token: Token d'authentification
+	 * 
+	 * @apiSuccess (Success) 201_Created Fichier envoyé avec succès
+	 * @apiError 401_Unauthorized Le token fourni n'a pas pu être validé / Vous n'êtes pas identifié
+	 * @apiError 409_Conflict Un fichier portant ce nom existe déjà dans le dossier
+	 *
+	 */
 	@SuppressWarnings("deprecation")
 	@POST
 	@Path("/list")
@@ -164,6 +234,18 @@ public class FileService {
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
+	
+	/**
+	 * @api {get} /files/get Télécharger un fichier
+	 * @apiGroup Files
+	 * @apiName getFile
+	 * 
+	 * @apiParam {String} path Chemin du fichier à télécharger
+	 * 
+	 * @apiSuccess {File} Fichier Fichier demandé
+	 * @apiError (Error) 204_NoContent Aucun fichier trouvé
+	 *
+	 */
 	@GET
 	@Path("/get")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -181,6 +263,17 @@ public class FileService {
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
+	/**
+	 * @api {get} /files/getimage Récupérer une image
+	 * @apiGroup Files
+	 * @apiName serveImage
+	 * 
+	 * @apiParam {String} q Chemin de l'image
+	 * 
+	 * @apiSuccess {File} Image Fichier demandé
+	 * @apiError (Error) 204_NoContent Aucun fichier trouvé
+	 *
+	 */
 	@GET
 	@Path("/getimage")
 	public Response serveImage(@QueryParam("q") String filepath) {
@@ -193,9 +286,22 @@ public class FileService {
 		} else {
 			response = Response.noContent();
 		}
-		return response.build();
+		return response.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
+	/**
+	 * @api {get} /files/view Récupérer un fichier visualisable (pdf / html)
+	 * @apiGroup Files
+	 * @apiName showFile
+	 * 
+	 * @apiParam {String} path Chemin du fichier
+	 * 
+	 * @apiSuccess {File} Fichier Fichier demandé
+	 * @apiError (Error) 204_NoContent Aucun fichier trouvé
+	 *
+	 */
 	@GET
 	@Path("/view")
 	@Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, "application/pdf" })
@@ -217,7 +323,9 @@ public class FileService {
 		} else {
 			response = Response.ok().status(Status.NO_CONTENT).entity("No content");
 		}
-		return response.build();
+		return response.header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization,X-Requested-With")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD").build();
 	}
 
 	private ResponseBuilder saveFile(InputStream file, String name) {

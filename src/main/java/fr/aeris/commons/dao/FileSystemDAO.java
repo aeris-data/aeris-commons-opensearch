@@ -5,8 +5,11 @@ import java.util.List;
 
 public interface FileSystemDAO {
 
-	String BEAN_NAME = "FileSystemDao";
-
+	/**
+	 * List all subfolders at the given path
+	 * @param path
+	 * @return
+	 */
 	public List<File> listFolder(String path);
 
 }

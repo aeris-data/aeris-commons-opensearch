@@ -3,11 +3,9 @@ package fr.aeris.commons.dao;
 import java.util.List;
 import java.util.Properties;
 
-import fr.aeris.commons.model.elements.OSEntry;
+import fr.aeris.commons.model.elements.opensearch.OSEntry;
 
 public interface CollectionDAO {
-
-	String BEAN_NAME = "collectionDao";
 
 	/**
 	 * Look for all collections

@@ -9,8 +9,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import fr.aeris.commons.dao.CalendarDAO;
-import fr.aeris.commons.model.elements.CalendarDay;
-import fr.aeris.commons.model.elements.CalendarDayStatus;
+import fr.aeris.commons.model.elements.calendar.CalendarDay;
+import fr.aeris.commons.model.elements.calendar.CalendarDayStatus;
 
 public class CalendarDAOSingleRootImpl implements CalendarDAO {
 
@@ -63,11 +63,14 @@ public class CalendarDAOSingleRootImpl implements CalendarDAO {
 			int count = folder.listFiles().length;
 			if (count == 0) {
 				day.setIs(CalendarDayStatus.UNAVAILABLE);
+				day.setColor("red");
 				day.setComment("Pas de fichiers");
 			} else if (count >= numFiles) {
 				day.setIs(CalendarDayStatus.FULL);
+				day.setColor("green");
 			} else {
 				day.setIs(CalendarDayStatus.PARTIAL);
+				day.setColor("orange");
 				String end = (count == 1) ? "" : "s";
 				day.setComment(count + " fichier" + end + " sur " + numFiles);
 			}
